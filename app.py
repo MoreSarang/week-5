@@ -12,8 +12,9 @@ FILE_PATH = "titanic.csv"
 # Read CSV once
 df = pd.read_csv(FILE_PATH)
 
-# --- Demographic Analysis ---
-st.header("Titanic Survival Analysis by Demographic Groups")
+# --- Exercise 1: Demographic Analysis ---
+st.header("Exercise 1: Survival Patterns")
+
 demographic_summary = survival_demographics(df)
 st.dataframe(demographic_summary)
 
@@ -21,8 +22,9 @@ st.write("Does age group have a stronger effect on survival rate for women than 
 demographic_fig = visualize_demographic(demographic_summary)
 st.plotly_chart(demographic_fig)
 
-# --- Family Groups Analysis ---
-st.header("Titanic Family Size and Wealth Analysis")
+# --- Exercise 2: Family Groups Analysis ---
+st.header("Exercise 2: Family Size and Wealth")
+
 family_summary = family_groups(df)
 st.dataframe(family_summary)
 
