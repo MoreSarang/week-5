@@ -118,7 +118,7 @@ def last_names(df: pd.DataFrame) -> pd.Series:
 
 
 if __name__ == "__main__":
-    FILE_PATH = "titanic.csv"  # Change as needed
+    FILE_PATH = r"titanic.csv"   # Change as needed
 
     df = pd.read_csv(FILE_PATH)
 
