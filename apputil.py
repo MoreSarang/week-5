@@ -8,13 +8,12 @@ def survival_demographics(df: pd.DataFrame) -> pd.DataFrame:
     Analyze Titanic survival patterns by class, sex, and age group.
 
     Args:
-        file_path (str): Path to the Titanic CSV dataset.
+        df (pd.DataFrame): Titanic dataset as DataFrame.
 
     Returns:
         pd.DataFrame: Summary table with passenger counts, survivors,
                       and survival rates by demographic groups.
     """
-    df = pd.read_csv(file_path)
 
     age_labels = ["Child", "Teen", "Adult", "Senior"]
     pclass_categories = [1, 2, 3]
@@ -97,12 +96,12 @@ def family_groups(df: pd.DataFrame) -> pd.DataFrame:
     Analyze relationship between family size, passenger class, and ticket fare.
 
     Args:
-        file_path (str): Path to Titanic CSV.
+        df (pd.DataFrame): Titanic dataset as DataFrame.
 
     Returns:
         pd.DataFrame: Aggregated data grouped by family size and passenger class.
     """
-    df = pd.read_csv(file_path)
+
     df["family_size"] = df["SibSp"] + df["Parch"] + 1
 
     grouped = (
@@ -120,17 +119,16 @@ def family_groups(df: pd.DataFrame) -> pd.DataFrame:
     return grouped
 
 
-def last_names(df: pd.DataFrame) -> pd.DataFrame:
+def last_names(df: pd.DataFrame) -> pd.Series:
     """
     Extract last names from the Titanic dataset and count their occurrences.
 
     Args:
-        file_path (str): Path to Titanic CSV.
+        df (pd.DataFrame): Titanic dataset as DataFrame.
 
     Returns:
         pd.Series: Last name counts indexed by last name.
     """
-    df = pd.read_csv(file_path)
     df["last_name"] = df["Name"].str.split(",").str[0].str.strip()
     counts = df["last_name"].value_counts()
     return counts
