@@ -3,7 +3,7 @@ import plotly.express as px
 from plotly.graph_objs._figure import Figure
 
 
-def survival_demographics(file_path: str) -> pd.DataFrame:
+def survival_demographics(df: pd.DataFrame) -> pd.DataFrame:
     """
     Analyze Titanic survival patterns by class, sex, and age group.
 
@@ -92,7 +92,7 @@ def visualize_demographic(summary_df: pd.DataFrame) -> Figure:
     return fig
 
 
-def family_groups(file_path: str) -> pd.DataFrame:
+def family_groups(df: pd.DataFrame) -> pd.DataFrame:
     """
     Analyze relationship between family size, passenger class, and ticket fare.
 
@@ -120,7 +120,7 @@ def family_groups(file_path: str) -> pd.DataFrame:
     return grouped
 
 
-def last_names(file_path: str) -> pd.Series:
+def last_names(df: pd.DataFrame) -> pd.DataFrame:
     """
     Extract last names from the Titanic dataset and count their occurrences.
 
