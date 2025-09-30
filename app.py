@@ -1,34 +1,24 @@
 import streamlit as st
-
-from apputil import *
-
-# Load Titanic dataset
-df = pd.read_csv('https://raw.githubusercontent.com/leontoddjohnson/datasets/main/data/titanic.csv')
-
-st.write(
-'''
-# Titanic Visualization 1
-
-'''
+from titanic_analysis import (
+    survival_demographics, visualize_demographic, family_groups, last_names
 )
-# Generate and display the figure
-fig1 = visualize_demographic()
-st.plotly_chart(fig1, use_container_width=True)
 
-st.write(
-'''
-# Titanic Visualization 2
-'''
-)
-# Generate and display the figure
-fig2 = visualize_families()
-st.plotly_chart(fig2, use_container_width=True)
+FILE_PATH = " Your file path goes here "
 
-st.write(
-'''
-# Titanic Visualization Bonus
-'''
-)
-# Generate and display the figure
-fig3 = visualize_family_size()
-st.plotly_chart(fig3, use_container_width=True)
+# --- Demographic Analysis ---
+st.header("Titanic Survival Analysis by Demographic Groups")
+demographic_summary = survival_demographics(FILE_PATH)
+st.dataframe(demographic_summary)
+
+st.write("Does age group have a stronger effect on survival rate for women than for men within each class?")
+demographic_fig = visualize_demographic(demographic_summary)
+st.plotly_chart(demographic_fig)
+
+# --- Family Groups Analysis ---
+st.header("Titanic Family Size and Wealth Analysis")
+family_summary = family_groups(FILE_PATH)
+st.dataframe(family_summary)
+
+last_name_counts = last_names(FILE_PATH)
+st.write("Which last names appeared most frequently, and how does this relate to variations in family size and survival?")
+st.dataframe(last_name_counts)
