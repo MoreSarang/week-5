@@ -3,7 +3,7 @@ from titanic_analysis import (
     survival_demographics, visualize_demographic, family_groups, last_names
 )
 
-FILE_PATH = " Your file path goes here "
+FILE_PATH = "titanic.csv"
 
 # --- Demographic Analysis ---
 st.header("Titanic Survival Analysis by Demographic Groups")
