@@ -1,14 +1,27 @@
 import pandas as pd
 import plotly.express as px
+from plotly.graph_objs._figure import Figure
 
 
 def survival_demographics(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Analyze Titanic survival patterns by class, sex, and age group.
+
+    Args:
+        df (pd.DataFrame): Titanic dataset as DataFrame.
+
+    Returns:
+        pd.DataFrame: Summary table with passenger counts, survivors,
+                      and survival rates by demographic groups.
+    """
+    # Make a copy to avoid modifying the original DataFrame
     df = df.copy()
 
     age_labels = ["Child", "Teen", "Adult", "Senior"]
     pclass_categories = [1, 2, 3]
     sex_categories = ["male", "female"]
 
+    # Create categorical age_group column with categories defined explicitly
     df["age_group"] = pd.cut(
         df["Age"], bins=[0, 12, 19, 59, float("inf")], labels=age_labels
     )
@@ -16,17 +29,20 @@ def survival_demographics(df: pd.DataFrame) -> pd.DataFrame:
         df["age_group"], categories=age_labels, ordered=True
     )
 
+    # Normalize and categorize Pclass and Sex columns
     df["Pclass"] = pd.Categorical(
         df["Pclass"], categories=pclass_categories, ordered=True
     )
     df["Sex"] = df["Sex"].str.lower().str.strip()
     df["Sex"] = pd.Categorical(df["Sex"], categories=sex_categories)
 
+    # Create a full MultiIndex for all possible groups
     idx = pd.MultiIndex.from_product(
         [pclass_categories, sex_categories, age_labels],
         names=["Pclass", "Sex", "age_group"]
     )
 
+    # Group by and aggregate survival info, reindex to include all groups
     grouped = (
         df.groupby(["Pclass", "Sex", "age_group"], observed=False)
         .agg(
@@ -37,16 +53,27 @@ def survival_demographics(df: pd.DataFrame) -> pd.DataFrame:
         .reset_index()
     )
 
+    # Calculate survival rate safely
     grouped["survival_rate"] = grouped.apply(
         lambda row: round(row["n_survivors"] / row["n_passengers"], 2)
-        if row["n_passengers"] > 0 else 0,
+        if row["n_passengers"] > 0
+        else 0,
         axis=1,
     )
 
     return grouped
 
 
-def visualize_demographic(summary_df: pd.DataFrame):
+def visualize_demographic(summary_df: pd.DataFrame) -> Figure:
+    """
+    Create a grouped bar chart of Titanic survival demographics.
+
+    Args:
+        summary_df (pd.DataFrame): DataFrame returned by survival_demographics().
+
+    Returns:
+        plotly.graph_objs._figure.Figure: Plotly figure object.
+    """
     fig = px.bar(
         summary_df,
         x="age_group",
@@ -68,13 +95,24 @@ def visualize_demographic(summary_df: pd.DataFrame):
             "Pclass": "Passenger Class",
         },
     )
+
     fig.update_traces(texttemplate="%{text:.2f}", textposition="outside")
     fig.update_layout(yaxis=dict(title="Survival Rate", range=[0, 1]), bargap=0.2)
 
-    fig.show()
+    return fig
 
 
 def family_groups(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Analyze relationship between family size, passenger class, and ticket fare.
+
+    Args:
+        df (pd.DataFrame): Titanic dataset as DataFrame.
+
+    Returns:
+        pd.DataFrame: Aggregated data grouped by family size and passenger class.
+    """
+    # Make a copy to avoid modifying the original DataFrame
     df = df.copy()
     df["family_size"] = df["SibSp"] + df["Parch"] + 1
 
@@ -93,49 +131,18 @@ def family_groups(df: pd.DataFrame) -> pd.DataFrame:
     return grouped
 
 
-def visualize_families(summary_df: pd.DataFrame):
-    fig = px.scatter(
-        summary_df,
-        x="family_size",
-        y="avg_fare",
-        color="Pclass",
-        size="n_passengers",
-        hover_data=["min_fare", "max_fare"],
-        title="Average Ticket Fare by Family Size and Passenger Class",
-        labels={
-            "family_size": "Family Size",
-            "avg_fare": "Average Fare",
-            "Pclass": "Passenger Class",
-        }
-    )
-    fig.show()
-
-
 def last_names(df: pd.DataFrame) -> pd.Series:
+    """
+    Extract last names from the Titanic dataset and count their occurrences.
+
+    Args:
+        df (pd.DataFrame): Titanic dataset as DataFrame.
+
+    Returns:
+        pd.Series: Last name counts indexed by last name.
+    """
+    # Make a copy to avoid modifying the original DataFrame
     df = df.copy()
     df["last_name"] = df["Name"].str.split(",").str[0].str.strip()
-    return df["last_name"].value_counts()
-
-
-if __name__ == "__main__":
-    FILE_PATH = r"titanic.csv"   # Change as needed
-
-    df = pd.read_csv(FILE_PATH)
-
-    print("Exercise 1: Survival Demographics Summary")
-    demo_summary = survival_demographics(df)
-    print(demo_summary)
-
-    print("\nVisualizing Survival Demographics...")
-    visualize_demographic(demo_summary)
-
-    print("\nExercise 2: Family Size and Wealth Summary")
-    fam_summary = family_groups(df)
-    print(fam_summary)
-
-    print("\nVisualizing Family Groups...")
-    visualize_families(fam_summary)
-
-    print("\nTop Last Names and Counts")
-    name_counts = last_names(df)
-    print(name_counts.head(15))
+    counts = df["last_name"].value_counts()
+    return counts
