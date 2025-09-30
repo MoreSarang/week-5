@@ -14,6 +14,8 @@ def survival_demographics(df: pd.DataFrame) -> pd.DataFrame:
         pd.DataFrame: Summary table with passenger counts, survivors,
                       and survival rates by demographic groups.
     """
+    # Make a copy to avoid modifying the original DataFrame
+    df = df.copy()
 
     age_labels = ["Child", "Teen", "Adult", "Senior"]
     pclass_categories = [1, 2, 3]
@@ -23,30 +25,39 @@ def survival_demographics(df: pd.DataFrame) -> pd.DataFrame:
     df["age_group"] = pd.cut(
         df["Age"], bins=[0, 12, 19, 59, float("inf")], labels=age_labels
     )
-    df["age_group"] = pd.Categorical(df["age_group"], categories=age_labels, ordered=True)
+    df["age_group"] = pd.Categorical(
+        df["age_group"], categories=age_labels, ordered=True
+    )
 
     # Normalize and categorize Pclass and Sex columns
-    df["Pclass"] = pd.Categorical(df["Pclass"], categories=pclass_categories, ordered=True)
+    df["Pclass"] = pd.Categorical(
+        df["Pclass"], categories=pclass_categories, ordered=True
+    )
     df["Sex"] = df["Sex"].str.lower().str.strip()
     df["Sex"] = pd.Categorical(df["Sex"], categories=sex_categories)
 
     # Create a full MultiIndex for all possible groups
     idx = pd.MultiIndex.from_product(
-        [pclass_categories, sex_categories, age_labels], names=["Pclass", "Sex", "age_group"]
+        [pclass_categories, sex_categories, age_labels],
+        names=["Pclass", "Sex", "age_group"]
     )
 
     # Group by and aggregate survival info, reindex to include all groups
     grouped = (
-        df.groupby(["Pclass", "Sex", "age_group"])
-          .agg(n_passengers=("PassengerId", "count"), n_survivors=("Survived", "sum"))
-          .reindex(idx, fill_value=0)
-          .reset_index()
+        df.groupby(["Pclass", "Sex", "age_group"], observed=False)
+        .agg(
+            n_passengers=("PassengerId", "count"),
+            n_survivors=("Survived", "sum")
+        )
+        .reindex(idx, fill_value=0)
+        .reset_index()
     )
 
     # Calculate survival rate safely
     grouped["survival_rate"] = grouped.apply(
         lambda row: round(row["n_survivors"] / row["n_passengers"], 2)
-        if row["n_passengers"] > 0 else 0,
+        if row["n_passengers"] > 0
+        else 0,
         axis=1,
     )
 
@@ -101,7 +112,8 @@ def family_groups(df: pd.DataFrame) -> pd.DataFrame:
     Returns:
         pd.DataFrame: Aggregated data grouped by family size and passenger class.
     """
-
+    # Make a copy to avoid modifying the original DataFrame
+    df = df.copy()
     df["family_size"] = df["SibSp"] + df["Parch"] + 1
 
     grouped = (
@@ -129,6 +141,8 @@ def last_names(df: pd.DataFrame) -> pd.Series:
     Returns:
         pd.Series: Last name counts indexed by last name.
     """
+    # Make a copy to avoid modifying the original DataFrame
+    df = df.copy()
     df["last_name"] = df["Name"].str.split(",").str[0].str.strip()
     counts = df["last_name"].value_counts()
     return counts
