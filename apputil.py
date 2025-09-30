@@ -16,38 +16,41 @@ def survival_demographics(file_path: str) -> pd.DataFrame:
     """
     df = pd.read_csv(file_path)
 
-    # Ensure Sex values are lowercased and stripped
-    df['Sex'] = df['Sex'].str.lower().str.strip()
-
-    # Create age categories (handle missing Age as NaN)
-    age_bins = [0, 12, 19, 59, float("inf")]
     age_labels = ["Child", "Teen", "Adult", "Senior"]
-    df['age_group'] = pd.cut(df['Age'], bins=age_bins, labels=age_labels)
+    pclass_categories = [1, 2, 3]
+    sex_categories = ["male", "female"]
 
-    # Create a MultiIndex of all possible class/sex/age_group combinations
-    pclass = sorted(df['Pclass'].unique())
-    sex = sorted(df['Sex'].unique())
-    age_group = age_labels
+    # Create categorical age_group column with categories defined explicitly
+    df["age_group"] = pd.cut(
+        df["Age"], bins=[0, 12, 19, 59, float("inf")], labels=age_labels
+    )
+    df["age_group"] = pd.Categorical(df["age_group"], categories=age_labels, ordered=True)
 
+    # Normalize and categorize Pclass and Sex columns
+    df["Pclass"] = pd.Categorical(df["Pclass"], categories=pclass_categories, ordered=True)
+    df["Sex"] = df["Sex"].str.lower().str.strip()
+    df["Sex"] = pd.Categorical(df["Sex"], categories=sex_categories)
+
+    # Create a full MultiIndex for all possible groups
     idx = pd.MultiIndex.from_product(
-        [pclass, sex, age_group],
-        names=['Pclass', 'Sex', 'age_group']
+        [pclass_categories, sex_categories, age_labels], names=["Pclass", "Sex", "age_group"]
     )
 
+    # Group by and aggregate survival info, reindex to include all groups
     grouped = (
-        df.groupby(['Pclass', 'Sex', 'age_group'])
-        .agg(n_passengers=('PassengerId', 'count'),
-             n_survivors=('Survived', 'sum'))
-        .reindex(idx, fill_value=0)
-        .reset_index()
+        df.groupby(["Pclass", "Sex", "age_group"])
+          .agg(n_passengers=("PassengerId", "count"), n_survivors=("Survived", "sum"))
+          .reindex(idx, fill_value=0)
+          .reset_index()
     )
 
-    grouped['survival_rate'] = grouped.apply(
-        lambda row: round(row['n_survivors'] / row['n_passengers'], 2) if row['n_passengers'] > 0 else 0,
-        axis=1
+    # Calculate survival rate safely
+    grouped["survival_rate"] = grouped.apply(
+        lambda row: round(row["n_survivors"] / row["n_passengers"], 2)
+        if row["n_passengers"] > 0 else 0,
+        axis=1,
     )
 
-    grouped = grouped.sort_values(by=["Pclass", "Sex", "age_group"]).reset_index(drop=True)
     return grouped
 
 
@@ -84,23 +87,20 @@ def visualize_demographic(summary_df: pd.DataFrame) -> Figure:
     )
 
     fig.update_traces(texttemplate="%{text:.2f}", textposition="outside")
-    fig.update_layout(
-        yaxis=dict(title="Survival Rate", range=[0, 1]),
-        bargap=0.2,
-    )
+    fig.update_layout(yaxis=dict(title="Survival Rate", range=[0, 1]), bargap=0.2)
 
     return fig
 
 
 def family_groups(file_path: str) -> pd.DataFrame:
     """
-    Analyze the relationship between family size, passenger class, and ticket fare.
+    Analyze relationship between family size, passenger class, and ticket fare.
 
     Args:
         file_path (str): Path to Titanic CSV.
 
     Returns:
-        pd.DataFrame: Grouped stats by family size and passenger class.
+        pd.DataFrame: Aggregated data grouped by family size and passenger class.
     """
     df = pd.read_csv(file_path)
     df["family_size"] = df["SibSp"] + df["Parch"] + 1
@@ -116,18 +116,19 @@ def family_groups(file_path: str) -> pd.DataFrame:
         .reset_index()
         .sort_values(by=["Pclass", "family_size"])
     )
+
     return grouped
 
 
 def last_names(file_path: str) -> pd.Series:
     """
-    Extract and count last names from Titanic dataset.
+    Extract last names from the Titanic dataset and count their occurrences.
 
     Args:
         file_path (str): Path to Titanic CSV.
 
     Returns:
-        pd.Series: Last name counts (sorted by count descending).
+        pd.Series: Last name counts indexed by last name.
     """
     df = pd.read_csv(file_path)
     df["last_name"] = df["Name"].str.split(",").str[0].str.strip()
